@@ -11,6 +11,9 @@ import {
 } from "./env.js";
 import { ROLES, type RoleName } from "./roles.js";
 import { invokeAgent } from "./agent.js";
+import { runPipeline } from "./pipeline.js";
+import { readFileSync, existsSync, writeFileSync } from "fs";
+import { join } from "path";
 
 const program = new Command();
 
@@ -147,5 +150,110 @@ agent
       process.exit(1);
     }
   });
+
+// ── pipeline ─────────────────────────────────────────────────────────
+
+const pipeline = program
+  .command("pipeline")
+  .description("Quality pipeline commands");
+
+pipeline
+  .command("run")
+  .description("Run review → test → validate pipeline on a code file")
+  .requiredOption("-c, --code <path>", "Path to the code file to evaluate")
+  .requiredOption("-w, --wp <json>", "Path to work package JSON file")
+  .option("-s, --spec <path>", "Path to spec file (for reviewer/validator)")
+  .option(
+    "-r, --retries <n>",
+    "Max rework attempts on failure",
+    (v: string) => parseInt(v, 10),
+    2
+  )
+  .action(
+    async (opts: {
+      code: string;
+      wp: string;
+      spec?: string;
+      retries: number;
+    }) => {
+      // Load code file
+      const codePath = join(process.cwd(), opts.code);
+      if (!existsSync(codePath)) {
+        console.error(`Code file not found: ${codePath}`);
+        process.exit(1);
+      }
+      const code = readFileSync(codePath, "utf-8");
+
+      // Load work package JSON
+      const wpPath = join(process.cwd(), opts.wp);
+      if (!existsSync(wpPath)) {
+        console.error(`Work package file not found: ${wpPath}`);
+        process.exit(1);
+      }
+      const workPackage = JSON.parse(readFileSync(wpPath, "utf-8"));
+
+      console.log(`Pipeline: ${workPackage.title ?? workPackage.id}`);
+      console.log(`Code: ${opts.code}`);
+      console.log(`Max retries: ${opts.retries}`);
+      if (opts.spec) console.log(`Spec: ${opts.spec}`);
+
+      const result = await runPipeline({
+        workPackage,
+        code,
+        specPath: opts.spec,
+        maxRetries: opts.retries,
+      });
+
+      // Summary
+      console.log("\n══════════════════════════════════════");
+      console.log(`Status: ${result.status.toUpperCase()}`);
+      console.log(`Iterations: ${result.iterations}`);
+      console.log(
+        `Stages: ${result.stages.map((s) => `${s.stage}=${s.verdict}`).join(", ")}`
+      );
+
+      if (result.status === "failed") {
+        // Write failure report
+        const reportPath = join(
+          process.cwd(),
+          ".state",
+          workPackage.id,
+          "failure-report.md"
+        );
+        const failedStages = result.stages.filter(
+          (s) => s.verdict === "fail"
+        );
+        const report = [
+          `# Pipeline Failure Report`,
+          ``,
+          `**Work Package**: ${workPackage.title ?? workPackage.id}`,
+          `**Iterations**: ${result.iterations}`,
+          `**Status**: FAILED`,
+          ``,
+          `## Failed Stages`,
+          ``,
+          ...failedStages.map(
+            (s) =>
+              `### ${s.stage.toUpperCase()}\n\n${s.feedback}\n`
+          ),
+        ].join("\n");
+
+        writeFileSync(reportPath, report);
+        console.log(`\nFailure report: ${reportPath}`);
+        process.exit(1);
+      }
+
+      if (result.status === "accepted") {
+        // Write accepted code to output
+        const outputPath = join(
+          process.cwd(),
+          "output",
+          `${workPackage.id}-accepted.txt`
+        );
+        writeFileSync(outputPath, result.finalCode);
+        console.log(`\nAccepted code: ${outputPath}`);
+      }
+    }
+  );
 
 program.parse();
