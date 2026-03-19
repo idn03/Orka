@@ -1,4 +1,4 @@
-# WP-002: Authentication API
+# WP-002: Authentication API (NextAuth.js)
 
 > **Assigned to**: implementer
 > **Priority**: 2 (depends on WP-001)
@@ -7,15 +7,21 @@
 
 ## Description
 
-Implement authentication API routes for user registration, login, and logout. All subsequent API routes depend on a working auth system.
+Implement authentication using **NextAuth.js** with a Credentials provider backed by PostgreSQL. Provides register, login, logout, and session management.
 
 ---
 
 ## Requirements
 
+### NextAuth.js Setup
+
+- Use NextAuth.js v5 (Auth.js) with the **Credentials** provider.
+- Use **Prisma adapter** for session/user storage if needed, or use JWT strategy.
+- Configure in `auth.ts` at the project root or `src/lib/auth.ts`.
+
 ### POST /api/auth/register
 
-Create a new user account.
+Custom route (not part of NextAuth — implement as a standard Next.js API route).
 
 **Request body:**
 ```json
@@ -28,7 +34,7 @@ Create a new user account.
 
 **Validation:**
 - `email`: required, valid email format, must not already exist
-- `name`: required, non-empty
+- `name`: required, non-empty (after trimming whitespace)
 - `password`: required, minimum 8 characters
 
 **Success response (201):**
@@ -40,75 +46,64 @@ Create a new user account.
 }
 ```
 
-**Error responses:**
-- 400: validation error (missing/invalid fields)
-- 409: email already registered
+**Error responses (per-field format):**
+- 400: `{ "errors": { "email": "Invalid email format", "password": "Must be at least 8 characters" } }`
+- 409: `{ "errors": { "email": "Email already registered" } }`
 
 **Behavior:**
-- Hash password with bcrypt before storing
+- Hash password with bcrypt (cost factor 10+) before storing
 - Never return the password in any response
+- Trim whitespace from `name` and `email`
 
-### POST /api/auth/login
+### Login
 
-Authenticate a user and create a session.
+Handled by NextAuth.js Credentials provider:
+- `POST /api/auth/callback/credentials` (NextAuth route)
+- Verify email + password against bcrypt hash in database
+- On success: establish a JWT or session cookie via NextAuth
+- On failure: return error (handled by NextAuth)
 
-**Request body:**
-```json
-{
-  "email": "user@example.com",
-  "password": "securepassword"
-}
-```
+### Logout
 
-**Success response (200):**
-```json
-{
-  "id": "uuid",
-  "email": "user@example.com",
-  "name": "Jane Doe"
-}
-```
+Handled by NextAuth.js:
+- `POST /api/auth/signout` (NextAuth route)
+- Destroys the session/cookie
 
-**Error responses:**
-- 401: invalid email or password
+### Session / Auth Middleware
 
-**Behavior:**
-- Verify password against stored bcrypt hash
-- Establish a session (cookie-based or JWT — implementer's choice)
+- Use NextAuth.js `auth()` helper to get the current session in server components and API routes.
+- Create a reusable `getSession()` wrapper that:
+  - Returns the current user if authenticated
+  - Returns `null` if not authenticated
+- In API routes, return `401` with `{ "errors": { "auth": "Not authenticated" } }` if no session.
 
-### POST /api/auth/logout
+### GET /api/auth/session
 
-End the user's session.
-
-**Success response (200):**
-```json
-{ "message": "Logged out" }
-```
-
-### Auth Middleware
-
-Create a reusable auth middleware/helper that:
-- Extracts the current user from the session
-- Returns 401 if no valid session exists
-- Makes the current user available to route handlers
+Built-in NextAuth route:
+- Returns current session data if authenticated
+- Returns `null`/empty if not
 
 ---
 
 ## Context
 
-- Tech stack: Next.js API routes or Server Actions, PostgreSQL.
-- Auth method is flexible (NextAuth.js, custom JWT, cookie sessions — implementer's choice).
-- All task-related endpoints (WP-003 and beyond) will depend on this auth middleware.
+- Tech stack: Next.js (App Router), NextAuth.js v5, Prisma, PostgreSQL.
+- NextAuth.js handles session token management, CSRF protection, and cookie security automatically.
+- The register endpoint is custom because NextAuth Credentials provider does not include registration.
+- All task-related endpoints (WP-003+) will use the `getSession()` wrapper to enforce auth.
 
 ---
 
 ## Acceptance Criteria
 
+- [ ] NextAuth.js is configured with Credentials provider
 - [ ] POST /api/auth/register creates a user with hashed password and returns 201
-- [ ] POST /api/auth/register returns 409 for duplicate email
-- [ ] POST /api/auth/register returns 400 for invalid input
-- [ ] POST /api/auth/login returns 200 and establishes a session for valid credentials
-- [ ] POST /api/auth/login returns 401 for invalid credentials
-- [ ] POST /api/auth/logout ends the session and returns 200
-- [ ] Auth middleware rejects unauthenticated requests with 401
+- [ ] POST /api/auth/register returns 409 with per-field error for duplicate email
+- [ ] POST /api/auth/register returns 400 with per-field errors for invalid input
+- [ ] Login via NextAuth establishes a session for valid credentials
+- [ ] Login fails with error for invalid credentials
+- [ ] Logout destroys the session
+- [ ] `getSession()` helper returns current user or null
+- [ ] API routes return 401 with per-field error format when not authenticated
 - [ ] Passwords are never returned in any API response
+- [ ] Whitespace-only names are rejected
