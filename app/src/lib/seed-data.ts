@@ -1,0 +1,118 @@
+import type { TeamMember, Task } from "./types";
+
+export const TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: "user-1",
+    name: "Alice",
+    email: "alice@orka.dev",
+  },
+  {
+    id: "user-2",
+    name: "Bob",
+    email: "bob@orka.dev",
+  },
+  {
+    id: "user-3",
+    name: "Robert",
+    email: "robert@orka.dev",
+  },
+];
+
+const now = new Date().toISOString();
+
+export const SEED_TASKS: Task[] = [
+  {
+    id: "task-1",
+    title: "Set up project repository",
+    description: "Initialize the monorepo with Next.js, Tailwind, and Shadcn UI",
+    status: "DONE",
+    creatorId: "user-1",
+    assigneeId: "user-1",
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: "task-2",
+    title: "Design database schema",
+    description: "Define tables for users and tasks with all constraints",
+    status: "IN_REVIEW",
+    assigneeId: "user-2",
+    creatorId: "user-1",
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: "task-3",
+    title: "Implement authentication API",
+    description: "Build register, login, and logout endpoints",
+    status: "IN_PROGRESS",
+    assigneeId: "user-1",
+    creatorId: "user-1",
+    dueDate: "2026-03-25",
+    createdAt: now,
+    updatedAt: now,
+    subtasks: [
+      {
+        id: "task-3a",
+        title: "Registration endpoint",
+        status: "DONE",
+        parentId: "task-3",
+        assigneeId: "user-1",
+        creatorId: "user-1",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "task-3b",
+        title: "Login endpoint",
+        status: "IN_PROGRESS",
+        parentId: "task-3",
+        assigneeId: "user-1",
+        creatorId: "user-1",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "task-3c",
+        title: "Logout endpoint",
+        status: "TODO",
+        parentId: "task-3",
+        assigneeId: "user-1",
+        creatorId: "user-1",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+  },
+  {
+    id: "task-4",
+    title: "Build task CRUD API",
+    description: "Create, read, update, delete endpoints for tasks",
+    status: "TODO",
+    assigneeId: "user-3",
+    creatorId: "user-2",
+    dueDate: "2026-03-28",
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: "task-5",
+    title: "Create task list UI",
+    description: "Main view with filters and search",
+    status: "TODO",
+    assigneeId: "user-2",
+    creatorId: "user-1",
+    dueDate: "2026-04-01",
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: "task-6",
+    title: "Write API integration tests",
+    description: "Test all auth and task endpoints",
+    status: "TODO",
+    creatorId: "user-3",
+    createdAt: now,
+    updatedAt: now,
+  },
+];
