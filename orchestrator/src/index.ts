@@ -9,6 +9,8 @@ import {
   getOllamaHost,
   getOllamaModel,
 } from "./env.js";
+import { ROLES, type RoleName } from "./roles.js";
+import { invokeAgent } from "./agent.js";
 
 const program = new Command();
 
@@ -16,6 +18,8 @@ program
   .name("orka")
   .description("Spec-driven, multi-agent software delivery system")
   .version("0.1.0");
+
+// ── auth ─────────────────────────────────────────────────────────────
 
 const auth = program.command("auth").description("Authentication commands");
 
@@ -86,5 +90,62 @@ async function checkOllama() {
     process.exit(1);
   }
 }
+
+// ── agent ────────────────────────────────────────────────────────────
+
+const agent = program.command("agent").description("Agent commands");
+
+agent
+  .command("roles")
+  .description("List all agent roles and their permissions")
+  .action(() => {
+    for (const role of Object.values(ROLES)) {
+      const perms = Object.entries(role.permissions)
+        .filter(([, v]) => v)
+        .map(([k]) => k);
+
+      console.log(`\n${role.name}`);
+      console.log(`  ${role.description}`);
+      console.log(`  Permissions: ${perms.join(", ")}`);
+    }
+    console.log();
+  });
+
+agent
+  .command("invoke <role> <message>")
+  .description("Invoke an agent with a message (for testing)")
+  .option("-s, --spec <path>", "Path to spec file (relative to cwd)")
+  .action(async (role: string, message: string, opts: { spec?: string }) => {
+    const roleName = role as RoleName;
+    if (!ROLES[roleName]) {
+      console.error(
+        `Unknown role: ${role}. Available: ${Object.keys(ROLES).join(", ")}`
+      );
+      process.exit(1);
+    }
+
+    console.log(`Invoking ${roleName} agent...`);
+    if (opts.spec) {
+      console.log(`Spec: ${opts.spec}`);
+      if (!ROLES[roleName].permissions.canReadSpec) {
+        console.log(`(Note: ${roleName} cannot read specs — access will be denied)`);
+      }
+    }
+
+    try {
+      const response = await invokeAgent({
+        roleName,
+        messages: [{ role: "user", content: message }],
+        specPath: opts.spec,
+      });
+
+      console.log(`\n── ${response.role} response ──\n`);
+      console.log(response.content);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`Agent invocation failed: ${message}`);
+      process.exit(1);
+    }
+  });
 
 program.parse();
