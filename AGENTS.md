@@ -94,6 +94,23 @@ Human updates specs/core.md → /derive → orchestrator diffs and updates WPs
 | `/bug-report <description>` | File a bug report | orchestrator |
 | `/status` | Show implementation progress vs ACs | orchestrator |
 
+## LLM Provider Configuration
+
+Orka uses [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) as a proxy
+to access Anthropic's Claude API. This avoids direct API key management and enables
+multi-account load balancing.
+
+**Setup:**
+1. Install and run CLIProxyAPI locally (default port: 8317)
+2. Set environment variables:
+   ```bash
+   export ANTHROPIC_BASE_URL=http://127.0.0.1:8317
+   export ANTHROPIC_AUTH_TOKEN=sk-dummy
+   ```
+3. Authenticate CLIProxyAPI with your provider accounts via its management API
+
+All agents in `opencode.json` will route through CLIProxyAPI automatically.
+
 ## Tech Stack (Target App)
 
 | Layer | Technology |
