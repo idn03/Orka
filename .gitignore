@@ -1,6 +1,18 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+.next/
+*.tsbuildinfo
+
+# Environment
 .env
+.env.local
+
+# Orka pipeline state
 .state/
 output/
-*.tsbuildinfo
+
+# OpenCode local data
+.opencode/data/

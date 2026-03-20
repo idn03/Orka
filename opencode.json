@@ -1,0 +1,107 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-sonnet-4-20250514",
+  "share": "manual",
+  "instructions": [
+    "AGENTS.md",
+    "specs/core.md",
+    "specs/STRUCTURE.md"
+  ],
+  "permission": {
+    "edit": "allow",
+    "bash": "allow"
+  },
+  "default_agent": "build",
+  "agent": {
+    "orchestrator": {
+      "description": "Reads core spec, generates derived work packages, coordinates the delivery pipeline, and tracks progress across all agents.",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    },
+    "spec-writer": {
+      "description": "Drafts, refines, and extends specifications. Ensures specs are unambiguous, complete, and testable with unique requirement IDs.",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "permission": {
+        "edit": "allow",
+        "bash": "deny"
+      }
+    },
+    "implementer": {
+      "description": "Writes code from work packages only. Cannot read core spec. Implements exactly what the work package describes.",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    },
+    "reviewer": {
+      "description": "Reviews code for correctness, quality, and alignment with both the spec and work package. Provides VERDICT: PASS or VERDICT: FAIL.",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "permission": {
+        "edit": "deny",
+        "bash": {
+          "*": "deny",
+          "git diff*": "allow",
+          "git log*": "allow"
+        }
+      }
+    },
+    "tester": {
+      "description": "Writes and runs tests from work packages only. Cannot read core spec. Verifies requirements listed in the work package.",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    },
+    "validator": {
+      "description": "Final validation against the core spec and acceptance criteria. Compares output against every AC and produces a structured pass/fail report.",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "permission": {
+        "edit": "deny",
+        "bash": {
+          "*": "deny",
+          "npm test*": "allow",
+          "npm run build*": "allow",
+          "npx prisma*": "allow"
+        }
+      }
+    }
+  },
+  "command": {
+    "derive": {
+      "description": "Generate or update derived work packages from core spec",
+      "template": "Read specs/core.md and generate self-contained work packages in specs/derived/. Each WP must have a unique ID (WP-NNN), title, description, requirements, context, and acceptance criteria. Workers (implementer/tester) only see these WPs, never the core spec. If derived WPs already exist, diff against them and update only what changed. Preserve WP IDs for unchanged packages. $ARGUMENTS",
+      "agent": "orchestrator"
+    },
+    "implement": {
+      "description": "Implement a specific work package",
+      "template": "Read the work package at specs/derived/$1. Implement the code in the app/ directory following the requirements exactly. Do NOT read specs/core.md — you only have access to the work package. After implementation, report what files were created or modified.",
+      "agent": "implementer"
+    },
+    "pipeline": {
+      "description": "Run review → test → validate pipeline on recent changes",
+      "template": "Run the quality pipeline on the app/ directory:\n\n1. REVIEW: As the reviewer agent, review the code changes against specs/core.md and the relevant work packages. Check for correctness, quality, and spec alignment. End with VERDICT: PASS or VERDICT: FAIL.\n\n2. TEST: As the tester agent, write and run tests for the implemented work packages. End with VERDICT: PASS or VERDICT: FAIL.\n\n3. VALIDATE: As the validator agent, compare the implementation against every acceptance criterion in specs/core.md. Produce a structured report. End with VERDICT: PASS or VERDICT: FAIL.\n\nSave results to .state/ directory as JSON. If any stage fails, report the failures clearly. $ARGUMENTS",
+      "agent": "build"
+    },
+    "bug-report": {
+      "description": "File a bug report in specs/bugs/",
+      "template": "Create a bug report in specs/bugs/ with the next available BUG-NNN ID. Include: title, description, steps to reproduce, expected vs actual behavior, related work package ID, and failing acceptance criteria. Bug: $ARGUMENTS",
+      "agent": "orchestrator"
+    },
+    "status": {
+      "description": "Show project implementation status",
+      "template": "Analyze the current state of the project:\n1. Read specs/core.md and list all acceptance criteria (AC-01 through AC-17)\n2. Check which work packages exist in specs/derived/\n3. Check what code exists in app/src/\n4. For each AC, determine if it is: NOT STARTED, IN PROGRESS, or DONE\n5. List any bugs in specs/bugs/\n6. Show a summary table of progress",
+      "agent": "orchestrator"
+    }
+  }
+}
