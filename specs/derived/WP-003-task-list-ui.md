@@ -66,15 +66,15 @@ Each task row displays:
 
 ## Acceptance Criteria
 
-- [ ] /tasks displays top-level tasks from store
-- [ ] Each task shows title, status badge, assignee, due date, subtask count
-- [ ] Overdue tasks visually indicated (red text/icon)
-- [ ] Search filters by title with 300ms debounce
-- [ ] Search has clear button
-- [ ] Status filter works (All + 4 statuses)
-- [ ] Assignee filter works (All + each assignee)
-- [ ] Due date filter works (All, Overdue, Today, This week, None)
-- [ ] Multiple filters combine with AND logic
-- [ ] Empty state messages shown appropriately
-- [ ] Loading state shown during SSR hydration
-- [ ] "New Task" button navigates to /tasks/new
+- [x] /tasks displays top-level tasks from store
+- [x] Each task shows title, status badge, assignee, due date, subtask count
+- [x] Overdue tasks visually indicated (red text/icon)
+- [x] Search filters by title with 300ms debounce
+- [x] Search has clear button
+- [x] Status filter works (All + 4 statuses)
+- [x] Assignee filter works (All + each assignee)
+- [x] Due date filter works (All, Overdue, Today, This week, None)
+- [x] Multiple filters combine with AND logic
+- [x] Empty state messages shown appropriately
+- [x] Loading state shown during SSR hydration
+- [x] "New Task" button navigates to /tasks/new
