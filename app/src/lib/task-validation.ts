@@ -5,6 +5,27 @@ export interface ValidationErrors {
   [field: string]: string;
 }
 
+async function hasCircularReference(
+  taskId: string,
+  newParentId: string
+): Promise<boolean> {
+  let currentId: string | null = newParentId;
+
+  while (currentId) {
+    if (currentId === taskId) {
+      return true;
+    }
+    const task: { parentId: string | null } | null = await prisma.task.findUnique({
+      where: { id: currentId },
+      select: { parentId: true },
+    });
+    if (!task) break;
+    currentId = task.parentId;
+  }
+
+  return false;
+}
+
 export async function validateCreateTask(
   input: CreateTaskInput,
   errors: ValidationErrors
@@ -48,6 +69,11 @@ export async function validateCreateTask(
       errors.parent_id = "Parent task not found";
     } else if (parentTask.parentId !== null) {
       errors.parent_id = "Cannot nest subtask under another subtask";
+    } else {
+      const hasCircular = await hasCircularReference("", input.parent_id);
+      if (hasCircular) {
+        errors.parent_id = "Circular reference detected";
+      }
     }
   }
 
@@ -93,24 +119,30 @@ export async function validateUpdateTask(
   }
 
   if (input.parent_id !== undefined && input.parent_id !== null) {
-    if (input.parent_id === taskId) {
-      errors.parent_id = "Cannot set parent_id to self";
-    }
-
-    const parentTask = await prisma.task.findUnique({
-      where: { id: input.parent_id },
+    const currentTask = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { parentId: true, _count: { select: { subtasks: true } } },
     });
-    if (!parentTask) {
-      errors.parent_id = "Parent task not found";
-    } else if (parentTask.parentId !== null) {
-      errors.parent_id = "Cannot nest subtask under another subtask";
+
+    if (currentTask?.parentId !== null) {
+      errors.parent_id = "A subtask cannot have its own subtask";
+    } else if (input.parent_id === taskId) {
+      errors.parent_id = "Cannot set parent_id to self";
     } else {
-      const subtasks = await prisma.task.findMany({
-        where: { parentId: taskId },
-        select: { id: true },
+      const parentTask = await prisma.task.findUnique({
+        where: { id: input.parent_id },
       });
-      if (subtasks.length > 0) {
+      if (!parentTask) {
+        errors.parent_id = "Parent task not found";
+      } else if (parentTask.parentId !== null) {
+        errors.parent_id = "Cannot nest subtask under another subtask";
+      } else if ((currentTask?._count?.subtasks ?? 0) > 0) {
         errors.parent_id = "Cannot make a task with subtasks into a subtask";
+      } else {
+        const hasCircular = await hasCircularReference(taskId, input.parent_id);
+        if (hasCircular) {
+          errors.parent_id = "Circular reference detected";
+        }
       }
     }
   }
