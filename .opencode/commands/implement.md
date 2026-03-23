@@ -9,7 +9,7 @@ Read the work package at `specs/derived/$1` and implement the code in the `app/`
 
 - Do NOT read `specs/core.md` — you only have access to the work package
 - Implement exactly what the work package describes
-- Follow the tech stack: Next.js App Router, Shadcn UI, Tailwind CSS, PostgreSQL + Prisma, NextAuth.js v5
+- Follow the tech stack: Next.js App Router, Shadcn UI, Tailwind CSS, localStorage for persistence
 - Use TypeScript strict mode
 - Place files according to the project structure in `app/src/`
 

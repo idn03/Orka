@@ -59,26 +59,40 @@ They operate exclusively from work packages in `specs/derived/`.
 
 ### 1. Core Spec → Derived Work Packages
 ```
-Human edits specs/core.md → /derive command → orchestrator generates WPs in specs/derived/
+Human edits specs/core.md → /derive → orchestrator generates WPs in specs/derived/
 ```
 
-### 2. Implementation
+### 2. New Feature (without modifying core spec)
+```
+Developer creates specs/new-features/FEAT-NNN-*.md
+→ /feature FEAT-NNN-*.md → orchestrator generates/updates WPs
+→ /implement WP-NNN-*.md → /pipeline
+```
+
+### 3. Refactoring
+```
+Developer creates specs/refactors/REFAC-NNN-*.md
+→ /refactor REFAC-NNN-*.md → orchestrator generates/updates WPs
+→ /implement WP-NNN-*.md → /pipeline
+```
+
+### 4. Implementation
 ```
 /implement WP-NNN-*.md → implementer writes code in app/ from the WP
 ```
 
-### 3. Quality Pipeline
+### 5. Quality Pipeline
 ```
 /pipeline → reviewer checks code → tester writes/runs tests → validator checks all ACs
 ```
 
-### 4. Bug Fixes
+### 6. Bug Fixes
 ```
 /bug-report "description" → orchestrator files BUG-NNN in specs/bugs/
 → orchestrator updates relevant WP → /implement re-runs → /pipeline re-validates
 ```
 
-### 5. Requirement Additions
+### 7. Core Spec Changes (breaking/architectural)
 ```
 Human updates specs/core.md → /derive → orchestrator diffs and updates WPs
 → /implement for new/changed WPs → /pipeline
@@ -89,6 +103,8 @@ Human updates specs/core.md → /derive → orchestrator diffs and updates WPs
 | Command | Description | Agent |
 |---------|-------------|-------|
 | `/derive` | Generate/update derived WPs from core spec | orchestrator |
+| `/feature FEAT-NNN-*.md` | Generate WPs from a feature request (no core.md change) | orchestrator |
+| `/refactor REFAC-NNN-*.md` | Generate WPs from a refactor request (no core.md change) | orchestrator |
 | `/implement WP-NNN-*.md` | Implement a specific work package | implementer |
 | `/pipeline` | Run review → test → validate pipeline | build |
 | `/bug-report <description>` | File a bug report | orchestrator |
