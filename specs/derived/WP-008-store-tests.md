@@ -108,11 +108,11 @@ Write unit tests for the client-side store module covering all operations and va
 
 ## Acceptance Criteria
 
-- [ ] All getAllTasks/getTask tests pass
-- [ ] All createTask validation tests pass
-- [ ] All updateTask tests pass (including cascade logic)
-- [ ] All deleteTask cascade tests pass
-- [ ] All queryTasks filter tests pass
-- [ ] All getSubtasks tests pass
-- [ ] All getAllAssignees tests pass
-- [ ] Tests are isolated (no state leakage)
+- [x] All getAllTasks/getTask tests pass
+- [x] All createTask validation tests pass
+- [x] All updateTask tests pass (including cascade logic)
+- [x] All deleteTask cascade tests pass
+- [x] All queryTasks filter tests pass
+- [x] All getSubtasks tests pass
+- [x] All getAllAssignees tests pass
+- [x] Tests are isolated (no state leakage)

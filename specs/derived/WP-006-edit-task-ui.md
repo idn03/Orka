@@ -48,10 +48,10 @@ Build the task edit page at `/tasks/:id/edit` with pre-filled form and validatio
 
 ## Acceptance Criteria
 
-- [ ] /tasks/:id/edit pre-fills form with current task data
-- [ ] Status dropdown shows all 4 options
-- [ ] Status can be changed to any status
-- [ ] Changing status to DONE on parent shows subtask cascade warning
-- [ ] Submit calls updateTask with changed fields only
-- [ ] Validation errors display inline per-field
-- [ ] Cancel button returns to detail page without saving
+- [x] /tasks/:id/edit pre-fills form with current task data
+- [x] Status dropdown shows all 4 options
+- [x] Status can be changed to any status
+- [x] Changing status to DONE on parent shows subtask cascade warning
+- [x] Submit calls updateTask with changed fields only
+- [x] Validation errors display inline per-field
+- [x] Cancel button returns to detail page without saving

@@ -58,7 +58,7 @@ On first visit (empty storage), load seed data to demonstrate the app.
 
 ## Acceptance Criteria
 
-- [ ] Task interface defined with all fields
-- [ ] TaskStatus type defined with 4 enum values
-- [ ] TypeScript types match core.md data model exactly
-- [ ] Hierarchy rules are documented in code comments
+- [x] Task interface defined with all fields
+- [x] TaskStatus type defined with 4 enum values
+- [x] TypeScript types match core.md data model exactly
+- [x] Hierarchy rules are documented in code comments

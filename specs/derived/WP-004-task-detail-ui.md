@@ -60,15 +60,15 @@ Build the task detail page at `/tasks/:id` with full task info, subtask list, an
 
 ## Acceptance Criteria
 
-- [ ] /tasks/:id displays full task details
-- [ ] Inline status dropdown changes status immediately
-- [ ] Status can be changed to any status freely
-- [ ] DONE status on parent shows warning about subtask cascade
-- [ ] Subtask list displayed with links and status badges
-- [ ] "Add Subtask" button navigates to /tasks/new?parentId=:id
-- [ ] Subtask view shows "Subtask of: [Parent Title]" with link
-- [ ] Delete button shows confirmation dialog
-- [ ] After delete, redirect appropriately (to /tasks or parent)
-- [ ] Back link navigates to /tasks or parent task
-- [ ] Timestamps shown as relative time
-- [ ] Overdue indicator on due date
+- [x] /tasks/:id displays full task details
+- [x] Inline status dropdown changes status immediately
+- [x] Status can be changed to any status freely
+- [x] DONE status on parent shows warning about subtask cascade
+- [x] Subtask list displayed with links and status badges
+- [x] "Add Subtask" button navigates to /tasks/new?parentId=:id
+- [x] Subtask view shows "Subtask of: [Parent Title]" with link
+- [x] Delete button shows confirmation dialog
+- [x] After delete, redirect appropriately (to /tasks or parent)
+- [x] Back link navigates to /tasks or parent task
+- [x] Timestamps shown as relative time
+- [x] Overdue indicator on due date

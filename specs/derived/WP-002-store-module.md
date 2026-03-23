@@ -96,17 +96,17 @@ On first visit (empty storage), load seed data:
 
 ## Acceptance Criteria
 
-- [ ] Store module exports all 8 operations
-- [ ] getAllTasks returns all tasks from localStorage
-- [ ] createTask generates UUID, sets status=TODO, sets timestamps
-- [ ] updateTask updates only provided fields and refreshes updatedAt
-- [ ] deleteTask cascades to subtasks
-- [ ] queryTasks supports search (case-insensitive substring), status, assignee, due, parentId
-- [ ] queryTasks due filter works for overdue, today, this_week, none
-- [ ] Multiple filters combine with AND logic
-- [ ] Status cascade to DONE updates subtasks; reverse does not
-- [ ] Title validation rejects empty, whitespace-only, >255 chars
-- [ ] parentId validation prevents nesting subtasks under subtasks
-- [ ] parentId validation prevents making parent-with-children into subtask
-- [ ] Seed data loads on first visit (empty localStorage)
-- [ ] getAllAssignees returns unique names for autocomplete
+- [x] Store module exports all 8 operations
+- [x] getAllTasks returns all tasks from localStorage
+- [x] createTask generates UUID, sets status=TODO, sets timestamps
+- [x] updateTask updates only provided fields and refreshes updatedAt
+- [x] deleteTask cascades to subtasks
+- [x] queryTasks supports search (case-insensitive substring), status, assignee, due, parentId
+- [x] queryTasks due filter works for overdue, today, this_week, none
+- [x] Multiple filters combine with AND logic
+- [x] Status cascade to DONE updates subtasks; reverse does not
+- [x] Title validation rejects empty, whitespace-only, >255 chars
+- [x] parentId validation prevents nesting subtasks under subtasks
+- [x] parentId validation prevents making parent-with-children into subtask
+- [x] Seed data loads on first visit (empty localStorage)
+- [x] getAllAssignees returns unique names for autocomplete

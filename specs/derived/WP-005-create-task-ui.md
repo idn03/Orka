@@ -55,12 +55,12 @@ Build the task creation page at `/tasks/new` with form validation and subtask cr
 
 ## Acceptance Criteria
 
-- [ ] /tasks/new renders create form with all fields
-- [ ] Title field is required with validation
-- [ ] Whitespace-only title rejected
-- [ ] Title > 255 chars rejected
-- [ ] Validation errors display inline per-field
-- [ ] Submit creates task and redirects to detail page
-- [ ] ?parentId pre-fills parentId and shows parent title
-- [ ] Assignee dropdown shows all existing assignees + "Unassigned"
-- [ ] Cancel button navigates back appropriately
+- [x] /tasks/new renders create form with all fields
+- [x] Title field is required with validation
+- [x] Whitespace-only title rejected
+- [x] Title > 255 chars rejected
+- [x] Validation errors display inline per-field
+- [x] Submit creates task and redirects to detail page
+- [x] ?parentId pre-fills parentId and shows parent title
+- [x] Assignee dropdown shows all existing assignees + "Unassigned"
+- [x] Cancel button navigates back appropriately
