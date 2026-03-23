@@ -22,5 +22,5 @@ Implement the root route `/` that redirects to `/tasks`.
 
 ## Acceptance Criteria
 
-- [ ] GET / redirects to /tasks
-- [ ] No UI rendered at /
+- [x] GET / redirects to /tasks
+- [x] No UI rendered at /
