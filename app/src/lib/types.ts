@@ -1,24 +1,15 @@
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
 
-export interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  avatarUrl?: string;
-}
-
 export interface Task {
   id: string;
   title: string;
-  description?: string;
+  description: string | null;
   status: TaskStatus;
-  dueDate?: string;
-  parentId?: string;
-  assigneeId?: string;
-  creatorId: string;
+  dueDate: string | null;
+  parentId: string | null;
+  assignee: string | null;
   createdAt: string;
   updatedAt: string;
-  subtasks?: Task[];
 }
 
 export const STATUS_CONFIG: Record<
@@ -37,3 +28,10 @@ export const STATUSES: TaskStatus[] = [
   "IN_REVIEW",
   "DONE",
 ];
+
+export const STORAGE_KEY = "orka-tasks";
+
+export const HIERARCHY_RULES = {
+  maxNestingDepth: 1,
+  topLevelParentId: null,
+} as const;
