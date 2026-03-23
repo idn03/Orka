@@ -101,9 +101,8 @@ describe("Task Validation", () => {
 
     it("should fail when making a task with subtasks into a subtask", async () => {
       (prisma.task.findUnique as jest.Mock)
-        .mockResolvedValueOnce({ id: "task-1", parentId: null })
+        .mockResolvedValueOnce({ id: "task-1", parentId: null, _count: { subtasks: 1 } })
         .mockResolvedValueOnce({ id: "parent-task", parentId: null });
-      (prisma.task.findMany as jest.Mock).mockResolvedValue([{ id: "subtask-1" }]);
 
       const errors: Record<string, string> = {};
       const result = await validateUpdateTask("task-1", { parent_id: "parent-task" }, errors);
