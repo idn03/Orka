@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { AlertCircle } from "lucide-react"
-import { TaskResponse, STATUS_CONFIG } from "@/lib/task-types"
+import { TaskResponse } from "@/lib/task-types"
+import { STATUS_CONFIG } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 

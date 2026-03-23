@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { TaskResponse, TaskStatus } from "@/lib/task-types"
+import { TaskResponse } from "@/lib/task-types"
+import { TaskStatus } from "@/lib/types"
 import { TaskListItem } from "@/components/task-list-item"
 import { TaskFilters } from "@/components/task-filters"
 import { Input } from "@/components/ui/input"
@@ -24,13 +25,17 @@ export function TaskList({ currentUserId, initialUsers }: TaskListProps) {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState(searchParams.get("search") || "")
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    status: TaskStatus | ""
+    assignee_id: string
+    due: string
+  }>({
     status: (searchParams.get("status") as TaskStatus | "") || "",
     assignee_id: searchParams.get("assignee_id") || "",
     due: searchParams.get("due") || "",
   })
 
-  const debounceRef = useRef<NodeJS.Timeout>()
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   const buildQueryString = useCallback(() => {
     const params = new URLSearchParams()

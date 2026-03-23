@@ -1,6 +1,6 @@
 "use client"
 
-import { TaskStatus } from "@/lib/task-types"
+import { TaskStatus } from "@/lib/types"
 import { Select } from "@/components/ui/select"
 
 interface TaskFiltersProps {
