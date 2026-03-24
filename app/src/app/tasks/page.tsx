@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { LoadingFallback } from "@/components/loading-fallback";
 import {
   getAllTasks,
   getAllAssignees,
@@ -15,6 +19,7 @@ import {
   getSubtasks,
 } from "@/lib/store";
 import { TaskStatus, STATUS_CONFIG, STATUSES } from "@/lib/types";
+import { isOverdue, formatDueDate } from "@/lib/date-utils";
 
 type DueFilter = "all" | "overdue" | "today" | "this_week" | "none";
 
@@ -24,24 +29,6 @@ function subscribe() {
 
 function useHydrated() {
   return useSyncExternalStore(subscribe, () => true, () => false);
-}
-
-function isOverdue(dueDate: string | null, status: TaskStatus): boolean {
-  if (!dueDate || status === "DONE") return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dueDate);
-  return due < today;
-}
-
-function formatDueDate(dueDate: string | null): string {
-  if (!dueDate) return "";
-  const date = new Date(dueDate);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function getSubtaskCount(parentId: string): number {
@@ -105,22 +92,22 @@ export default function TaskListPage() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b bg-background px-6 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold tracking-tight">Orka Tasks</h1>
+      <PageShell>
+        <PageHeader
+          title="Orka Tasks"
+          action={
             <Button onClick={handleCreateTask}>
               <Plus className="mr-2 h-4 w-4" />
               New Task
             </Button>
-          </div>
-        </header>
+          }
+        />
         <main className="flex-1 p-6">
           <div className="flex items-center justify-center">
-            <div className="text-muted-foreground">Loading...</div>
+            <LoadingFallback />
           </div>
         </main>
-      </div>
+      </PageShell>
     );
   }
 
@@ -143,16 +130,16 @@ export default function TaskListPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-background px-6 py-3">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold tracking-tight">Orka Tasks</h1>
+    <PageShell>
+      <PageHeader
+        title="Orka Tasks"
+        action={
           <Button onClick={handleCreateTask}>
             <Plus className="mr-2 h-4 w-4" />
             New Task
           </Button>
-        </div>
-      </header>
+        }
+      />
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-5xl">
@@ -212,7 +199,7 @@ export default function TaskListPage() {
           ) : (
             <div className="space-y-2">
               {filteredTasks.map((task) => {
-                const overdue = isOverdue(task.dueDate, task.status);
+                const taskOverdue = isOverdue(task.dueDate, task.status);
                 const subtaskCount = getSubtaskCount(task.id);
 
                 return (
@@ -227,19 +214,17 @@ export default function TaskListPage() {
                           <span className="truncate font-medium">{task.title}</span>
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                          <Badge variant="secondary">
-                            {STATUS_CONFIG[task.status].label}
-                          </Badge>
+                          <StatusBadge status={task.status} />
                           <span>{task.assignee || "Unassigned"}</span>
                           {task.dueDate && (
                             <span
                               className={`flex items-center gap-1 ${
-                                overdue ? "text-red-600" : ""
+                                taskOverdue ? "text-red-600" : ""
                               }`}
                             >
                               <Calendar className="h-3 w-3" />
                               {formatDueDate(task.dueDate)}
-                              {overdue && " (Overdue)"}
+                              {taskOverdue && " (Overdue)"}
                             </span>
                           )}
                           {subtaskCount > 0 && (
@@ -257,6 +242,6 @@ export default function TaskListPage() {
           )}
         </div>
       </main>
-    </div>
+    </PageShell>
   );
 }

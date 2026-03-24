@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Pencil, Trash2, Plus, Calendar, User } from "lucide-react";
+import { Pencil, Trash2, Plus, Calendar, User } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -23,108 +23,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
+import { SubtaskRow } from "@/components/subtask-row";
+import { TaskNotFound } from "@/components/task-not-found";
 import { getTask, getSubtasks, updateTask, deleteTask } from "@/lib/store";
 import { Task, TaskStatus, STATUS_CONFIG, STATUSES } from "@/lib/types";
-
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffSecs < 60) return "just now";
-  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-  return date.toLocaleDateString();
-}
-
-function isOverdue(dueDate: string | null, status: TaskStatus): boolean {
-  if (!dueDate || status === "DONE") return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dueDate);
-  return due < today;
-}
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString();
-}
-
-interface StatusBadgeProps {
-  status: TaskStatus;
-}
-
-function StatusBadge({ status }: StatusBadgeProps) {
-  const config = STATUS_CONFIG[status];
-  const bgColors: Record<TaskStatus, string> = {
-    TODO: "#e5e7eb",
-    IN_PROGRESS: "#dbeafe",
-    IN_REVIEW: "#fef3c7",
-    DONE: "#dcfce7",
-  };
-  const textColors: Record<TaskStatus, string> = {
-    TODO: "#374151",
-    IN_PROGRESS: "#1d4ed8",
-    IN_REVIEW: "#92400e",
-    DONE: "#166534",
-  };
-
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-      style={{
-        backgroundColor: bgColors[status],
-        color: textColors[status],
-      }}
-    >
-      {config.label}
-    </span>
-  );
-}
-
-interface SubtaskRowProps {
-  task: Task;
-}
-
-function SubtaskRow({ task }: SubtaskRowProps) {
-  const overdue = isOverdue(task.dueDate, task.status);
-
-  return (
-    <div className="flex items-center justify-between rounded-lg border p-3">
-      <div className="flex flex-1 items-center gap-3">
-        <Link
-          href={`/tasks/${task.id}`}
-          className="flex-1 font-medium hover:underline"
-        >
-          {task.title}
-        </Link>
-        <StatusBadge status={task.status} />
-      </div>
-      <div className="flex items-center gap-4">
-        {task.assignee ? (
-          <span className="text-sm text-muted-foreground">
-            {task.assignee}
-          </span>
-        ) : (
-          <span className="text-sm text-muted-foreground">Unassigned</span>
-        )}
-        {task.dueDate && (
-          <span
-            className={`text-sm ${overdue ? "text-red-600 font-medium" : "text-muted-foreground"}`}
-          >
-            {formatDate(task.dueDate)}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
+import { isOverdue, formatDate, formatRelativeTime } from "@/lib/date-utils";
 
 export default function TaskDetailPage() {
   const params = useParams();
@@ -182,42 +87,16 @@ export default function TaskDetailPage() {
   };
 
   if (!task) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b bg-background px-6 py-3">
-          <div className="flex items-center gap-4">
-            <Link href="/tasks">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h1 className="text-xl font-bold">Task Not Found</h1>
-          </div>
-        </header>
-        <main className="flex-1 p-6">
-          <p className="text-muted-foreground">
-            The requested task could not be found.
-          </p>
-        </main>
-      </div>
-    );
+    return <TaskNotFound />;
   }
 
   const taskOverdue = isOverdue(task.dueDate, task.status);
   const isSubtask = task.parentId !== null;
+  const backLink = isSubtask && task.parentId ? `/tasks/${task.parentId}` : "/tasks";
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-background px-6 py-3">
-        <div className="flex items-center gap-4">
-          <Link href={isSubtask && task.parentId ? `/tasks/${task.parentId}` : "/tasks"}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-xl font-bold tracking-tight">Orka Tasks</h1>
-        </div>
-      </header>
+    <PageShell>
+      <PageHeader title="Orka Tasks" backLink={backLink} />
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-3xl">
@@ -382,6 +261,6 @@ export default function TaskDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageShell>
   );
 }

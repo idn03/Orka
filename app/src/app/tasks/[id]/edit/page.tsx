@@ -1,20 +1,14 @@
 "use client";
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useMemo, Suspense, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import { PageShell } from "@/components/page-shell";
+import { PageHeader } from "@/components/page-header";
+import { TaskForm } from "@/components/task-form";
+import { TaskNotFound } from "@/components/task-not-found";
+import { LoadingFallback } from "@/components/loading-fallback";
 import { getTask, updateTask, getSubtasks, getAllAssignees } from "@/lib/store";
-import { TaskStatus, STATUSES, STATUS_CONFIG } from "@/lib/types";
-
-interface FormErrors {
-  title?: string;
-  dueDate?: string;
-}
+import { TaskStatus } from "@/lib/types";
 
 function EditTaskForm() {
   const router = useRouter();
@@ -23,252 +17,83 @@ function EditTaskForm() {
 
   const task = getTask(taskId);
   const subtasks = getSubtasks(taskId);
-  const assignees = getAllAssignees();
-
-  const [title, setTitle] = useState(task?.title ?? "");
-  const [description, setDescription] = useState(task?.description ?? "");
-  const [dueDate, setDueDate] = useState(task?.dueDate ?? "");
-  const [assignee, setAssignee] = useState(task?.assignee ?? "");
-  const [status, setStatus] = useState<TaskStatus>(task?.status ?? "TODO");
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const assignees = useMemo(() => getAllAssignees(), []);
 
   const originalTask = task;
 
   const hasSubtasks = subtasks.length > 0;
-  const showSubtaskWarning = status === "DONE" && hasSubtasks && originalTask?.status !== "DONE";
+  const [showSubtaskWarning, setShowSubtaskWarning] = useState(
+    task?.status !== "DONE"
+  );
 
-  const assigneeOptions = useMemo(() => {
-    const options = assignees.map((a) => ({ value: a, label: a }));
-    return [{ value: "", label: "Unassigned" }, ...options];
-  }, [assignees]);
+  const handleSubmit = async (data: {
+    title: string;
+    description: string | null;
+    dueDate: string | null;
+    assignee: string | null;
+    status?: TaskStatus;
+  }) => {
+    if (!originalTask) return;
 
-  const statusOptions = STATUSES.map((s) => ({
-    value: s,
-    label: STATUS_CONFIG[s].label,
-  }));
+    const updates: Parameters<typeof updateTask>[1] = {};
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) {
-      newErrors.title = "Title is required";
-    } else if (trimmedTitle.length > 255) {
-      newErrors.title = "Title must be 255 characters or less";
+    if (data.title !== originalTask.title) {
+      updates.title = data.title;
+    }
+    if (data.description !== (originalTask.description ?? "")) {
+      updates.description = data.description;
+    }
+    if (data.dueDate !== (originalTask.dueDate ?? "")) {
+      updates.dueDate = data.dueDate;
+    }
+    if (data.assignee !== (originalTask.assignee ?? "")) {
+      updates.assignee = data.assignee;
+    }
+    if (data.status && data.status !== originalTask.status) {
+      updates.status = data.status;
     }
 
-    if (dueDate) {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(dueDate)) {
-        newErrors.dueDate = "Due date must be a valid date (YYYY-MM-DD)";
-      } else {
-        const date = new Date(dueDate);
-        if (isNaN(date.getTime())) {
-          newErrors.dueDate = "Due date must be a valid date";
-        }
-      }
+    if (Object.keys(updates).length > 0) {
+      updateTask(taskId, updates);
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const updates: Parameters<typeof updateTask>[1] = {};
-
-      if (title.trim() !== originalTask?.title) {
-        updates.title = title.trim();
-      }
-      if (description.trim() !== (originalTask?.description ?? "")) {
-        updates.description = description.trim() || null;
-      }
-      if (dueDate !== (originalTask?.dueDate ?? "")) {
-        updates.dueDate = dueDate || null;
-      }
-      if (assignee !== (originalTask?.assignee ?? "")) {
-        updates.assignee = assignee || null;
-      }
-      if (status !== originalTask?.status) {
-        updates.status = status;
-      }
-
-      if (Object.keys(updates).length > 0) {
-        updateTask(taskId, updates);
-      }
-
-      router.push(`/tasks/${taskId}`);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes("Title")) {
-          setErrors({ title: error.message });
-        } else if (error.message.includes("due date")) {
-          setErrors({ dueDate: error.message });
-        }
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    router.push(`/tasks/${taskId}`);
   };
 
   const handleCancel = () => {
     router.push(`/tasks/${taskId}`);
   };
 
+  const handleBackClick = () => {
+    handleCancel();
+  };
+
   if (!task) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b bg-background px-6 py-3">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={handleCancel}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-xl font-bold tracking-tight">Orka Tasks</h1>
-          </div>
-        </header>
-        <main className="flex-1 p-6">
-          <div className="mx-auto max-w-2xl">
-            <Card>
-              <CardContent className="py-10">
-                <p className="text-center text-muted-foreground">Task not found</p>
-              </CardContent>
-              <CardFooter className="flex justify-center">
-                <Button onClick={handleCancel}>Back to Tasks</Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </main>
-      </div>
-    );
+    return <TaskNotFound backLink="/tasks" />;
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-background px-6 py-3">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={handleCancel}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-xl font-bold tracking-tight">Orka Tasks</h1>
-        </div>
-      </header>
+    <PageShell>
+      <PageHeader title="Orka Tasks" onBackClick={handleBackClick} />
 
       <main className="flex-1 p-6">
         <div className="mx-auto max-w-2xl">
-          <Card>
-            <CardHeader>
-              <CardTitle>Edit Task</CardTitle>
-            </CardHeader>
-
-            <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="title" className="text-sm font-medium">
-                    Title <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Enter task title"
-                    aria-invalid={!!errors.title}
-                  />
-                  {errors.title && (
-                    <p className="text-sm text-destructive">{errors.title}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="description" className="text-sm font-medium">
-                    Description
-                  </label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter task description (optional)"
-                    rows={4}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="dueDate" className="text-sm font-medium">
-                    Due Date
-                  </label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    placeholder="YYYY-MM-DD"
-                  />
-                  {errors.dueDate && (
-                    <p className="text-sm text-destructive">{errors.dueDate}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="assignee" className="text-sm font-medium">
-                    Assignee
-                  </label>
-                  <Select
-                    id="assignee"
-                    value={assignee}
-                    onChange={(e) => setAssignee(e.target.value)}
-                    options={assigneeOptions}
-                    placeholder="Select assignee"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="status" className="text-sm font-medium">
-                    Status
-                  </label>
-                  <Select
-                    id="status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                    options={statusOptions}
-                  />
-                  {showSubtaskWarning && (
-                    <p className="text-sm text-amber-600">
-                      This will also mark all subtasks as Done
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-
-              <CardFooter className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleCancel}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  <Save className="mr-1 h-4 w-4" />
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
+          <TaskForm
+            mode="edit"
+            initialValues={{
+              title: task.title,
+              description: task.description,
+              dueDate: task.dueDate,
+              assignee: task.assignee,
+              status: task.status,
+            }}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            assignees={assignees}
+          />
         </div>
       </main>
-    </div>
-  );
-}
-
-function LoadingFallback() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-muted-foreground">Loading...</p>
-    </div>
+    </PageShell>
   );
 }
 
